@@ -11,6 +11,7 @@ typedef struct {
   uint32_t child_index;
   uint32_t structural_child_index;
   const TSSymbol *alias_sequence;
+  const bool include_all;
 } CursorChildIterator;
 
 // CursorChildIterator
@@ -18,7 +19,7 @@ typedef struct {
 static inline CursorChildIterator ts_tree_cursor_iterate_children(const TreeCursor *self) {
   TreeCursorEntry *last_entry = array_back(&self->stack);
   if (ts_subtree_child_count(*last_entry->subtree) == 0) {
-    return (CursorChildIterator) {NULL_SUBTREE, self->tree, length_zero(), 0, 0, NULL};
+    return (CursorChildIterator) {NULL_SUBTREE, self->tree, length_zero(), 0, 0, NULL, self->include_all};
   }
   const TSSymbol *alias_sequence = ts_language_alias_sequence(
     self->tree->language,
@@ -31,6 +32,7 @@ static inline CursorChildIterator ts_tree_cursor_iterate_children(const TreeCurs
     .child_index = 0,
     .structural_child_index = 0,
     .alias_sequence = alias_sequence,
+    .include_all = self->include_all,
   };
 }
 
@@ -45,7 +47,7 @@ static inline bool ts_tree_cursor_child_iterator_next(CursorChildIterator *self,
     .child_index = self->child_index,
     .structural_child_index = self->structural_child_index,
   };
-  *visible = ts_subtree_visible(*child);
+  *visible = self->include_all || ts_subtree_visible(*child);
   bool extra = ts_subtree_extra(*child);
   if (!extra && self->alias_sequence) {
     *visible |= self->alias_sequence[self->structural_child_index];
@@ -71,12 +73,35 @@ TSTreeCursor ts_tree_cursor_new(TSNode node) {
   return self;
 }
 
+TSTreeCursor ts_tree_cursor_all_new(TSNode node) {
+  TSTreeCursor self = {NULL, NULL, {0, 0}};
+  ts_tree_cursor_all_init((TreeCursor *)&self, node);
+  return self;
+}
+
 void ts_tree_cursor_reset(TSTreeCursor *_self, TSNode node) {
   ts_tree_cursor_init((TreeCursor *)_self, node);
 }
 
 void ts_tree_cursor_init(TreeCursor *self, TSNode node) {
   self->tree = node.tree;
+  self->include_all = false;
+  array_clear(&self->stack);
+  array_push(&self->stack, ((TreeCursorEntry) {
+    .subtree = (const Subtree *)node.id,
+    .position = {
+      ts_node_start_byte(node),
+      ts_node_start_point(node)
+    },
+    .child_index = 0,
+    .structural_child_index = 0,
+  }));
+}
+
+// Initialize a TreeCursor which returns hidden nodes too
+void ts_tree_cursor_all_init(TreeCursor *self, TSNode node) {
+  self->tree = node.tree;
+  self->include_all = true;
   array_clear(&self->stack);
   array_push(&self->stack, ((TreeCursorEntry) {
     .subtree = (const Subtree *)node.id,

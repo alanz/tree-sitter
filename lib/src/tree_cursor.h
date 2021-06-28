@@ -13,9 +13,11 @@ typedef struct {
 typedef struct {
   const TSTree *tree;
   Array(TreeCursorEntry) stack;
+  bool include_all;
 } TreeCursor;
 
 void ts_tree_cursor_init(TreeCursor *, TSNode);
+void ts_tree_cursor_all_init(TreeCursor *, TSNode);
 void ts_tree_cursor_current_status(
   const TSTreeCursor *,
   TSFieldId *,

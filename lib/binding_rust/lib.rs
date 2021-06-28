@@ -1056,6 +1056,11 @@ impl<'tree> Node<'tree> {
         TreeCursor(unsafe { ffi::ts_tree_cursor_new(self.0) }, PhantomData)
     }
 
+    /// Create a new [TreeCursor] starting from this node, to traverse all nodes, including hidden ones.
+    pub fn walk_all(&self) -> TreeCursor<'tree> {
+        TreeCursor(unsafe { ffi::ts_tree_cursor_all_new(self.0) }, PhantomData)
+    }
+
     /// Edit this node to keep it in-sync with source code that has been edited.
     ///
     /// This function is only rarely needed. When you edit a syntax tree with the

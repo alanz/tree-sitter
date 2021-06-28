@@ -536,6 +536,15 @@ extern "C" {
     pub fn ts_tree_cursor_new(arg1: TSNode) -> TSTreeCursor;
 }
 extern "C" {
+    #[doc = " Create a new tree cursor starting from the given node."]
+    #[doc = ""]
+    #[doc = " A tree cursor allows you to walk a syntax tree more efficiently than is"]
+    #[doc = " possible using the `TSNode` functions. It is a mutable object that is always"]
+    #[doc = " on a certain syntax node, and can be moved imperatively to different nodes."]
+    #[doc = " This one traverses all nodes, including invisible ones"]
+    pub fn ts_tree_cursor_all_new(arg1: TSNode) -> TSTreeCursor;
+}
+extern "C" {
     #[doc = " Delete a tree cursor, freeing all of the memory that it used."]
     pub fn ts_tree_cursor_delete(arg1: *mut TSTreeCursor);
 }
